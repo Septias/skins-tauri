@@ -1,0 +1,33 @@
+:root {
+  --background: #222632;
+  --red: #f45e44;
+  --orange: #f2a04c;
+  --yellow: #fcfd65;
+  --green: #8af46a;
+  --blue: #889bfb;
+}
+
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: var(--background);
+}
+
+#nprogress {
+  pointer-events: none;
+}
+
+#nprogress .bar {
+  background: rgb(13,148,136);
+  opacity: 0.75;
+  position: fixed;
+  z-index: 1031;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+}
