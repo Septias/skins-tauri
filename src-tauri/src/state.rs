@@ -3,9 +3,10 @@ use futures::future::join_all;
 use serde::Serialize;
 use std::{
     collections::HashMap,
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex}, fs,
 };
 use thiserror::Error;
+use ts_rs::TS;
 
 use crate::{
     requests::steam::{
@@ -14,7 +15,8 @@ use crate::{
     string_serializer, ACC,
 };
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, TS, Debug)]
+#[ts(export)]
 pub struct ChestInfo {
     pub name: String,
     pub market_hash_name: String,
@@ -78,7 +80,7 @@ impl State {
 
     pub async fn fetch_user_items(&self) -> Result<Vec<Asset>, StateError> {
         if let Some(acc) = self.user_id {
-            let resp = self
+            /* let resp = self
                 .client
                 .get(format!(
                     "https://steamcommunity.com/inventory/{}/{}/2",
@@ -88,8 +90,8 @@ impl State {
                 .send()
                 .await?;
 
-            let t = &resp.text().await?;
-            //let t = fs::read_to_string("items.json").unwrap();
+            let t = &resp.text().await?; */
+            let t = fs::read_to_string("items.json").unwrap();
             let resp = serde_json::from_str::<UserInventoryResponse>(&t).unwrap();
 
             if resp.success != 1 {
@@ -164,8 +166,9 @@ impl State {
                     ])
                     .send()
                     .await?;
-
-                let price = serde_json::from_str::<MarketPrice>(&resp.text().await?).unwrap();
+                  let t = resp.text().await?;
+                println!("{t}");
+                let price = serde_json::from_str::<MarketPrice>(&t).unwrap();
                 Ok::<_, StateError>(price)
             });
             requests.push(request);

@@ -58,6 +58,7 @@ pub mod csgobackpack {
 pub mod steam {
     use serde::{Deserialize, Deserializer, Serialize};
     use serde_aux::prelude::deserialize_number_from_string as str_to_num;
+    use ts_rs::TS;
     use std::{
         fmt::{self, Display},
         str::FromStr,
@@ -102,7 +103,8 @@ pub mod steam {
         pub prices: Vec<(String, f32, String)>,
     }
 
-    #[derive(Deserialize, Serialize, Clone, Debug)]
+    #[derive(Deserialize, TS, Serialize, Clone, Debug)]
+    #[ts(export)]
     pub struct MarketPrice {
         pub success: bool,
         #[serde(deserialize_with = "deserialize_euro")]

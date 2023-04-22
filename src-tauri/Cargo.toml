@@ -26,6 +26,7 @@ itertools = "*"
 serde-aux = "*"
 urlencoding = "*"
 futures = "*"
+ts-rs = "*"
 
 [features]
 # by default Tauri runs in production mode
