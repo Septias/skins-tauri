@@ -164,10 +164,11 @@ impl State {
                         ("market_hash_name", &market_name_hash),
                         ("currency", "3"),
                     ])
-                    .send()
-                    .await?;
-                  let t = resp.text().await?;
-                println!("{t}");
+                    .build()?;
+                println!("url:{}", resp.url());
+                let resp = client.execute(resp).await?;
+                let t = resp.text().await?;
+                println!("{t}, {market_name_hash}");
                 let price = serde_json::from_str::<MarketPrice>(&t).unwrap();
                 Ok::<_, StateError>(price)
             });

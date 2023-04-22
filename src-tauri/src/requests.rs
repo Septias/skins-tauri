@@ -123,7 +123,7 @@ pub mod steam {
     {
         let mut string = String::deserialize(deserializer).unwrap();
         string.pop();
-        let string = string.replace(',', ".");
+        let string = string.replace(',', ".").replace('-', "0");
         Ok(string.parse::<T>().unwrap())
     }
 
