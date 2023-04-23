@@ -1,15 +1,32 @@
 <script lang="ts" setup>
 import { invoke } from '@tauri-apps/api'
-import { ref } from 'vue'
+import type { ChestInfo } from 'src-tauri/bindings/ChestInfo'
 
-const disp = ref('ja')
-invoke('get_user_containers').then((res) => {
-  disp.value = res
-  console.log(res)
-})
+const chests: Ref<ChestInfo[]> = ref([{ amount: 3, icon_url: '-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fRPasw8rsUFJ5KBFZv668FFY2nfKadD4U7Y7lwYXexaGlYb3QzjlUvZ0k0ujHptug2VbirkRrNW2md4SLMlhph09hpX0', market_hash_name: 'Spectrum Case', name: 'Spectrum Case', price: { lowest_price: 2.1600000858306885, median_price: 2.259999990463257, success: true, volume: 17682 } }, { amount: 4, icon_url: '-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fRPasw8rsUFJ5KBFZv668FFUuh6qZJmlD7tiyl4OIlaGhYuLTzjhVupJ12urH89ii3lHlqEdoMDr2I5jVLFFSv_J2Rg', market_hash_name: 'Operation Phoenix Weapon Case', name: 'Operation Phoenix Weapon Case', price: { lowest_price: 2.7300000190734863, median_price: 2.890000104904175, success: true, volume: 7243 } }, { amount: 4, icon_url: '-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fRPasw8rsVFx5KAVo5PSkKV4xhfGfKTgVvIXlxNPSwaOmMLiGwzgJvJMniO-Zoo_z2wXg-EVvfSmtc78HsNoy', market_hash_name: 'Gamma 2 Case', name: 'Gamma 2 Case', price: { lowest_price: 1.8899999856948853, median_price: 1.9299999475479126, success: true, volume: 25066 } }, { amount: 3, icon_url: '-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fRPasw8rsUFJ5KBFZv668FFY5naqQIz4R7Yjix9bZkvKiZrmAzzlTu5AoibiT8d_x21Wy8hY_MWz1doSLMlhpM3FKbNs', market_hash_name: 'Clutch Case', name: 'Clutch Case', price: { lowest_price: 1.0499999523162842, median_price: 1.0199999809265137, success: true, volume: 111572 } }, { amount: 13, icon_url: '-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fRPasw8rsUFJ5KBFZv668FFYxnaeQImRGu4S1x9TawfSmY-iHkmoD7cEl2LiQpIjz3wPl_ERkYWHwLY-LMlhp9pkR_UQ', market_hash_name: 'Operation Wildfire Case', name: 'Operation Wildfire Case', price: { lowest_price: 2.0299999713897705, median_price: 2.0399999618530273, success: true, volume: 9672 } }, { amount: 5, icon_url: '-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fRPasw8rsUFJ5KBFZv668FFMu1aPMI24auITjxteJwPXxY72AkGgIvZAniLjHpon2jlbl-kpvNjz3JJjVLFG9rl1YLQ', market_hash_name: 'Operation Breakout Weapon Case', name: 'Operation Breakout Weapon Case', price: { lowest_price: 6.119999885559082, median_price: 6.260000228881836, success: true, volume: 11078 } }, { amount: 3, icon_url: '-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fRPasw8rsUFJ5KBFZv668FFUxnaPLJz5H74y1xtTcz6etNumIx29U6Zd3j7yQoYih3lG1-UJqY27xJIeLMlhpaD9Aclo', market_hash_name: 'Danger Zone Case', name: 'Danger Zone Case', price: { lowest_price: 0.7400000095367432, median_price: 0.7699999809265137, success: true, volume: 115458 } }, { amount: 1, icon_url: '-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fRPasw8rsUFJ5KBFZv668FFY4naeaJGhGtdnmx4Tek_bwY-iFlGlUsJMp3LuTot-mjFGxqUttZ2r3d4eLMlhpnZPxZK0', market_hash_name: 'Spectrum 2 Case', name: 'Spectrum 2 Case', price: { lowest_price: 1.5800000429153442, median_price: 1.6799999475479126, success: true, volume: 35857 } }, { amount: 4, icon_url: '-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fRPasw8rsUFJ5KBFZv668FFY1naTMdzwTtNrukteIkqT2MO_Uwz5Q6cYhibyXo4rw2ALsrkRoYjuncNCLMlhpEV4XDTk', market_hash_name: 'Glove Case', name: 'Glove Case', price: { lowest_price: 4.610000133514404, median_price: 4.610000133514404, success: true, volume: 15761 } }, { amount: 4, icon_url: '-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fRPasw8rsUFJ5KBFZv668FFYznarJJjkQ6ovjw4SPlfP3auqEl2oBuJB1j--WoY322QziqkdpZGr3IteLMlhpw4RJCv8', market_hash_name: 'Gamma Case', name: 'Gamma Case', price: { lowest_price: 1.9800000190734863, median_price: 1.9900000095367432, success: true, volume: 22317 } }, { amount: 6, icon_url: '-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fRPasw8rsUFJ5KBFZv668FFAuhqSaKWtEu43mxtbbk6b1a77Twm4Iu8Yl3bCU9Imii1Xt80M5MmD7JZjVLFH-6VnQJQ', market_hash_name: 'Chroma 2 Case', name: 'Chroma 2 Case', price: { lowest_price: 2.0999999046325684, median_price: 2.2300000190734863, success: true, volume: 18928 } }, { amount: 3, icon_url: '-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fRPasw8rsUFJ5KBFZv668FFYynaSdJGhE74y0wNWIw_OlNuvXkDpSuZQmi--SrN-h3gey-Uo6YWmlIoCLMlhplhFFvwI', market_hash_name: 'Chroma 3 Case', name: 'Chroma 3 Case', price: { lowest_price: 1.8799999952316284, median_price: 1.9800000190734863, success: true, volume: 24383 } }, { amount: 1, icon_url: '-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fRPasw8rsUFJ5KBFZv668FFUynfWaI25G6Ijkl9iPw_SnNrjXw2oBu8cj3b2Qo4_33QbnrUdlYD37ddCLMlhpvs0XIz0', market_hash_name: 'Prisma Case', name: 'Prisma Case', price: { lowest_price: 0.7400000095367432, median_price: 0.7799999713897705, success: true, volume: 66859 } }, { amount: 3, icon_url: '-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fRPasw8rsUFJ5KBFZv668FFYwnfKfcG9HvN7iktaOkqD1auLTxD5SvZYgiLvFpo7xjVLh-kdrYWnzcoGLMlhpsyM-5vg', market_hash_name: 'Revolver Case', name: 'Revolver Case', price: { lowest_price: 1.4299999475479126, median_price: 1.5099999904632568, success: true, volume: 20090 } }, { amount: 6, icon_url: '-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fRPasw8rsUFJ5KBFZv668FF4u1qubIW4Su4mzxYHbzqGtZ-KGlz8EuJcg3rnE9NiijVe3_UY-Zzr2JJjVLFEEeiQRtg', market_hash_name: 'Shadow Case', name: 'Shadow Case', price: { lowest_price: 1.1200000047683716, median_price: 1.1699999570846558, success: true, volume: 13541 } }, { amount: 4, icon_url: '-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fRPasw8rsUFJ5KBFZv668FFEuh_KQJTtEuI63xIXbxqOtauyClTMEsJV1jruS89T3iQKx_BBqa2j3JpjVLFH1xpp0EQ', market_hash_name: 'Chroma Case', name: 'Chroma Case', price: { lowest_price: 2.700000047683716, median_price: 3, success: true, volume: 3962 } }, { amount: 2, icon_url: '-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fRPasw8rsUFJ5KBFZv668FFU4naLOJzgUuYqyzIaIxa6jMOLXxGkHvcMjibmU99Sg3Qaw-hA_ZWrzLISLMlhpgJJUhGE', market_hash_name: 'Snakebite Case', name: 'Snakebite Case', price: { lowest_price: 0.6399999856948853, median_price: 0.6100000143051147, success: true, volume: 189821 } }])
+
+function update() {
+  invoke('get_user_containers').then((res) => {
+    chests.value = res as ChestInfo[]
+    console.log(res)
+  })
+}
+
+const total_value = chests.value.map(chest => chest.amount * chest.price.median_price).reduce((a, b) => a + b, 0).toFixed(2)
 </script>
 
 <template lang="pug">
-p.p-2 hi
-p ja: {{ disp }}
+button(@click="update") Update
+div Total chest value: {{ total_value }}€
+div.c-grid
+  div.border.rounded-xl.p-2.shadow-xl(v-for="chest in chests")
+    h1 {{ chest.name }}
+    p {{ chest.amount }} x {{ chest.price.median_price.toFixed(2) }}€ = {{ (chest.amount * chest.price.median_price).toFixed(2) }}€
 </template>
+
+<style lang="sass">
+.c-grid
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr))
+  grid-gap: 1rem
+  padding: 1rem
+</style>
