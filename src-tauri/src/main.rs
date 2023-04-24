@@ -3,18 +3,30 @@
     windows_subsystem = "windows"
 )]
 
-use state::{ChestInfo, State, StateError};
-use tokio;
-
 mod requests;
 mod state;
 mod string_serializer;
 
+use state::{ State, StateError};
+use tokio;
+use requests::steam::Asset;
+
+
 const ACC: usize = 76561198083067227;
 
 #[tauri::command]
-async fn get_user_containers(state: tauri::State<'_, State>) -> Result<Vec<ChestInfo>, StateError> {
-    state.fetch_user_containers().await
+async fn get_user_containers(game: usize, user: usize, state: tauri::State<'_, State>) -> Result<Vec<Asset>, StateError> {
+    state.fetch_user_containers(game, user).await
+}
+
+#[tauri::command]
+async fn get_user_items(game: usize, user: usize, state: tauri::State<'_, State>) -> Result<Vec<Asset>, StateError> {
+    state.fetch_user_containers(game, user).await
+}
+
+#[tauri::command]
+async fn get_item_prices(game: usize, user: usize, state: tauri::State<'_, State>) -> Result<Vec<Asset>, StateError> {
+    state.fetch_user_containers(game, user).await
 }
 
 #[tokio::main]

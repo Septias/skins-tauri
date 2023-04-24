@@ -64,8 +64,6 @@ pub struct State {
     user_id: Option<usize>,
     client: reqwest::Client,
     market_items: Arc<Mutex<HashMap<usize, MarketItem>>>,
-    user_inventory: Arc<Mutex<Vec<Asset>>>,
-    asset_prices: Arc<Mutex<HashMap<usize, MarketPrice>>>,
 }
 
 impl State {
@@ -77,7 +75,7 @@ impl State {
         }
     }
 
-    async fn send_request<T: Deserialize>(client: Client, req: Request) -> Result<T,  StateError>{
+    async fn send_request<T: for<'a> Deserialize<'a>>(client: &Client, req: Request) -> Result<T,  StateError>{
       let resp = client.execute(req).await?;
       if resp.status() != 200 {
         return Err(StateError::Other(anyhow!("The request returned an error response code: {}", resp.status())));
@@ -94,29 +92,26 @@ impl State {
                 "https://steamcommunity.com/inventory/{}/{}/2",
                 acc, game
             ))
-            .query(&[("l", "english"), ("count", "5000")]);
+            .query(&[("l", "english"), ("count", "5000")]).build()?;
 
-        let items:  = Self::send_request(self.client, req).await?;
+        let items:UserInventoryResponse = Self::send_request(&self.client, req).await?;
 
-        if resp.success != 1 {
-            return Err(StateError::Other(anyhow!("Problem with request")));
-        }
-
-        let mut user_items = self.user_inventory.lock().unwrap();
-        *user_items = resp.assets;
-        *self.market_items.lock().unwrap() = resp
+        *self.market_items.lock().unwrap() = items
             .descriptions
             .into_iter()
             .map(|desc| (desc.classid, desc))
             .collect();
 
-        Ok(user_items.clone())
+        let mut assets = items.assets;
+        if dedup {
+          assets = dedup_assets(&assets);
+        }
+        Ok(assets)
     }
 
-    pub async fn fetch_user_containers(&self) -> Result<Vec<ChestInfo>, StateError> {
-        let assets: Vec<Asset> = self.fetch_user_items().await?;
-        let deduped = dedup_assets(&assets);
-        let containers: Vec<Asset> = deduped
+    pub async fn fetch_user_containers(&self, game: usize, acc: usize) -> Result<Vec<Asset>, StateError> {
+        let assets: Vec<Asset> = self.fetch_user_items(game, acc, true).await?;
+        let containers: Vec<Asset> = assets
             .into_iter()
             .filter(|asset| {
                 self.market_items
@@ -131,23 +126,10 @@ impl State {
                     == "Base Grade Container"
             })
             .collect();
-
-        self.update_prices(&containers).await?;
-
-        let items = containers
-            .into_iter()
-            .map(|asset| {
-                ChestInfo::new(
-                    asset,
-                    &self.market_items.lock().unwrap(),
-                    &self.asset_prices.lock().unwrap(),
-                )
-            })
-            .collect();
-        Ok(items)
+        Ok(containers)
     }
 
-    async fn update_prices(&self, assets: &Vec<Asset>) -> Result<(), StateError> {
+    pub async fn update_prices(&self, assets: &Vec<Asset>) -> Result<HashMap<usize, MarketPrice>, StateError> {
         let mut requests = vec![];
         for asset in assets {
             let market_name_hash = {
@@ -155,6 +137,7 @@ impl State {
                 assets[&asset.classid].market_hash_name.clone()
             };
             let game = self.game.to_string();
+            let classid = asset.classid;
 
             let request = tokio::spawn(async move {
                 let client = reqwest::Client::new();
@@ -171,22 +154,17 @@ impl State {
                 let t = resp.text().await?;
                 println!("{t}, {market_name_hash}");
                 let price = serde_json::from_str::<MarketPrice>(&t).unwrap();
-                Ok::<_, StateError>(price)
+                Ok::<_, StateError>((classid, price))
             });
             requests.push(request);
         }
         let prices = join_all(requests).await;
-        prices
+        let prices = prices
             .into_iter()
             .map(|a| a.unwrap().unwrap())
-            .zip(assets)
-            .for_each(|(price, asset)| {
-                self.asset_prices
-                    .lock()
-                    .unwrap()
-                    .insert(asset.classid, price);
-            });
-        Ok(())
+            .collect();
+
+        Ok(prices)
     }
 
     pub async fn _get_price_history(marke_hash_name: &str) -> anyhow::Result<PriceHistoryResponse> {
