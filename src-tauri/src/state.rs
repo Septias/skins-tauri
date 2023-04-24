@@ -1,6 +1,7 @@
 use anyhow::anyhow;
 use futures::future::join_all;
-use serde::Serialize;
+use reqwest::{Response, Client, Request};
+use serde::{Serialize, Deserializer, Deserialize};
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex}, fs,
@@ -59,7 +60,6 @@ pub enum StateError {
 
 #[derive(Default)]
 pub struct State {
-    currency: String,
     game: usize,
     user_id: Option<usize>,
     client: reqwest::Client,
@@ -71,49 +71,50 @@ pub struct State {
 impl State {
     pub fn new(_user_id: Option<usize>) -> Self {
         Self {
-            currency: "eur".to_string(),
             game: 730,
             user_id: Some(ACC),
             ..Default::default()
         }
     }
 
-    pub async fn fetch_user_items(&self) -> Result<Vec<Asset>, StateError> {
-        if let Some(acc) = self.user_id {
-            /* let resp = self
-                .client
-                .get(format!(
-                    "https://steamcommunity.com/inventory/{}/{}/2",
-                    acc, self.game
-                ))
-                .query(&[("l", "english"), ("count", "5000")])
-                .send()
-                .await?;
+    async fn send_request<T: Deserialize>(client: Client, req: Request) -> Result<T,  StateError>{
+      let resp = client.execute(req).await?;
+      if resp.status() != 200 {
+        return Err(StateError::Other(anyhow!("The request returned an error response code: {}", resp.status())));
+      }
+      let body =resp.text().await?;
+      let serialized = serde_json::from_str::<T>(&body)?;
+      Ok(serialized)
+    }
 
-            let t = &resp.text().await?; */
-            let t = fs::read_to_string("items.json").unwrap();
-            let resp = serde_json::from_str::<UserInventoryResponse>(&t).unwrap();
+    pub async fn fetch_user_items(&self, game: usize, acc: usize, dedup: bool) -> Result<Vec<Asset>, StateError> {
+        let req = self
+            .client
+            .get(format!(
+                "https://steamcommunity.com/inventory/{}/{}/2",
+                acc, game
+            ))
+            .query(&[("l", "english"), ("count", "5000")]);
 
-            if resp.success != 1 {
-                StateError::Other(anyhow!("Problem with request"));
-            }
+        let items:  = Self::send_request(self.client, req).await?;
 
-            let mut user_items = self.user_inventory.lock().unwrap();
-            *user_items = resp.assets;
-            *self.market_items.lock().unwrap() = resp
-                .descriptions
-                .into_iter()
-                .map(|desc| (desc.classid, desc))
-                .collect();
-
-            Ok(user_items.clone())
-        } else {
-            Err(StateError::NoUser)
+        if resp.success != 1 {
+            return Err(StateError::Other(anyhow!("Problem with request")));
         }
+
+        let mut user_items = self.user_inventory.lock().unwrap();
+        *user_items = resp.assets;
+        *self.market_items.lock().unwrap() = resp
+            .descriptions
+            .into_iter()
+            .map(|desc| (desc.classid, desc))
+            .collect();
+
+        Ok(user_items.clone())
     }
 
     pub async fn fetch_user_containers(&self) -> Result<Vec<ChestInfo>, StateError> {
-        let assets = self.fetch_user_items().await?;
+        let assets: Vec<Asset> = self.fetch_user_items().await?;
         let deduped = dedup_assets(&assets);
         let containers: Vec<Asset> = deduped
             .into_iter()
