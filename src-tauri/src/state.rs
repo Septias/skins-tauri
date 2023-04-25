@@ -1,52 +1,27 @@
 use anyhow::anyhow;
 use futures::future::join_all;
-use reqwest::{Response, Client, Request};
-use serde::{Serialize, Deserializer, Deserialize};
+use http_cache_reqwest::{HttpCache, Cache, CacheMode, CACacheManager};
+use itertools::Itertools;
+use reqwest::{Client, Request};
+use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
+use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
-    sync::{Arc, Mutex}, fs,
 };
 use thiserror::Error;
-use ts_rs::TS;
 
 use crate::{
     requests::steam::{
-        Asset, MarketItem, MarketPrice, PriceHistoryResponse, UserInventoryResponse,
+        Asset, FullAsset, MarketPrice, PriceHistoryResponse, UserInventoryResponse,
     },
-    string_serializer, ACC,
+    string_serializer,
 };
-
-#[derive(Serialize, TS, Debug)]
-#[ts(export)]
-pub struct ChestInfo {
-    pub name: String,
-    pub market_hash_name: String,
-    pub icon_url: String,
-    pub amount: usize,
-    pub price: MarketPrice,
-}
-
-impl ChestInfo {
-    fn new(
-        asset: Asset,
-        items: &HashMap<usize, MarketItem>,
-        prices: &HashMap<usize, MarketPrice>,
-    ) -> Self {
-        let item = items[&asset.classid].clone();
-        Self {
-            name: item.name,
-            icon_url: item.icon_url,
-            market_hash_name: item.market_hash_name,
-            amount: asset.amount,
-            price: prices.get(&asset.classid).unwrap().clone(),
-        }
-    }
-}
 
 #[derive(Error, Debug, Serialize)]
 pub enum StateError {
-    #[error("No user")]
-    NoUser,
+    #[error(transparent)]
+    #[serde(with = "string_serializer")]
+    ReqwestMiddleware(#[from] reqwest_middleware::Error),
     #[error(transparent)]
     #[serde(with = "string_serializer")]
     Reqwest(#[from] reqwest::Error),
@@ -58,68 +33,94 @@ pub enum StateError {
     Other(#[from] anyhow::Error),
 }
 
-#[derive(Default)]
 pub struct State {
-    game: usize,
-    user_id: Option<usize>,
-    client: reqwest::Client,
-    market_items: Arc<Mutex<HashMap<usize, MarketItem>>>,
+    client: ClientWithMiddleware,
 }
 
 impl State {
-    pub fn new(_user_id: Option<usize>) -> Self {
+    pub fn new() -> Self {
         Self {
-            game: 730,
-            user_id: Some(ACC),
-            ..Default::default()
+            client: ClientBuilder::new(Client::new())
+            .with(Cache(HttpCache {
+              mode: CacheMode::Default,
+              manager: CACacheManager::default(),
+              options: None,
+            }))
+            .build()
         }
     }
 
-    async fn send_request<T: for<'a> Deserialize<'a>>(client: &Client, req: Request) -> Result<T,  StateError>{
-      let resp = client.execute(req).await?;
-      if resp.status() != 200 {
-        return Err(StateError::Other(anyhow!("The request returned an error response code: {}", resp.status())));
-      }
-      let body =resp.text().await?;
-      let serialized = serde_json::from_str::<T>(&body)?;
-      Ok(serialized)
+    // Send a request and return an Error when the response is not 200.
+    async fn send_request<T: for<'a> Deserialize<'a>>(
+        client: &ClientWithMiddleware,
+        req: Request,
+    ) -> Result<T, StateError> {
+        let resp = client.execute(req).await?;
+        if resp.status() != 200 {
+            return Err(StateError::Other(anyhow!(
+                "The request returned an error response code: {}",
+                resp.status()
+            )));
+        }
+        let body = resp.text().await?;
+        let serialized = serde_json::from_str::<T>(&body)?;
+        Ok(serialized)
     }
 
-    pub async fn fetch_user_items(&self, game: usize, acc: usize, dedup: bool) -> Result<Vec<Asset>, StateError> {
+    // Get all items a user has.
+    pub async fn fetch_user_items(
+        &self,
+        game: usize,
+        acc: usize,
+        dedup: bool,
+    ) -> Result<Vec<FullAsset>, StateError> {
         let req = self
             .client
             .get(format!(
                 "https://steamcommunity.com/inventory/{}/{}/2",
                 acc, game
             ))
-            .query(&[("l", "english"), ("count", "5000")]).build()?;
+            .query(&[("l", "english"), ("count", "5000")])
+            .build()?;
 
-        let items:UserInventoryResponse = Self::send_request(&self.client, req).await?;
+        println!("{}", req.url());
+        let assets: UserInventoryResponse = Self::send_request(&self.client, req).await?;
 
-        *self.market_items.lock().unwrap() = items
+        let mut item_descriptions: HashMap<usize, _> = assets
             .descriptions
             .into_iter()
             .map(|desc| (desc.classid, desc))
             .collect();
 
-        let mut assets = items.assets;
+        let mut assets = assets.assets;
         if dedup {
-          assets = dedup_assets(&assets);
+            assets = dedup_assets(&assets);
         }
-        Ok(assets)
+        Ok(assets
+            .into_iter()
+            .map(|asset| {
+                let classid = item_descriptions.remove(&asset.classid).unwrap();
+                asset.hydrate(classid)
+            })
+            .collect_vec())
     }
 
-    pub async fn fetch_user_containers(&self, game: usize, acc: usize) -> Result<Vec<Asset>, StateError> {
-        let assets: Vec<Asset> = self.fetch_user_items(game, acc, true).await?;
-        let containers: Vec<Asset> = assets
+    // Get all containers the user has.
+    // This deduplicates the items fetched.
+    pub async fn fetch_user_containers(
+        &self,
+        game: usize,
+        acc: usize,
+    ) -> Result<Vec<FullAsset>, StateError> {
+        let assets: Vec<FullAsset> = self.fetch_user_items(game, acc, true).await?;
+        let containers: Vec<FullAsset> = assets
             .into_iter()
             .filter(|asset| {
-                self.market_items
-                    .lock()
-                    .unwrap()
-                    .get(&asset.classid)
-                    .unwrap()
-                    .item_type
+                  println!("{}", asset.item_type
+                  .as_ref()
+                  .unwrap()
+                  .as_str());
+                  asset.item_type
                     .as_ref()
                     .unwrap()
                     .as_str()
@@ -129,41 +130,36 @@ impl State {
         Ok(containers)
     }
 
-    pub async fn update_prices(&self, assets: &Vec<Asset>) -> Result<HashMap<usize, MarketPrice>, StateError> {
+    // Get a asset prices from steam market
+    // Options can contain 'currency' 'appid' and probably more...
+    pub async fn get_asset_prices(
+        &self,
+        assets: Vec<(usize, String)>,
+        options: HashMap<String, String>,
+    ) -> Result<HashMap<usize, Result<MarketPrice, StateError>>, StateError> {
         let mut requests = vec![];
-        for asset in assets {
-            let market_name_hash = {
-                let assets = self.market_items.lock().unwrap();
-                assets[&asset.classid].market_hash_name.clone()
-            };
-            let game = self.game.to_string();
-            let classid = asset.classid;
+        let mut used_options: HashMap<String, String> = HashMap::from_iter([
+            ("appid".to_string(), "730".to_string()),
+            ("currency".to_string(), "3".to_string()),
+        ]);
+        used_options.extend(options);
 
+        for (asset, market_hash_name) in assets.into_iter() {
+            let req = self
+                .client
+                .get("https://steamcommunity.com/market/priceoverview/")
+                .query(&used_options)
+                .query(&[("market_hash_name".to_string(), market_hash_name)])
+                .build()?;
+            let client = self.client.clone();
             let request = tokio::spawn(async move {
-                let client = reqwest::Client::new();
-                let resp = client
-                    .get("https://steamcommunity.com/market/priceoverview/")
-                    .query(&[
-                        ("appid", game.as_str()),
-                        ("market_hash_name", &market_name_hash),
-                        ("currency", "3"),
-                    ])
-                    .build()?;
-                println!("url:{}", resp.url());
-                let resp = client.execute(resp).await?;
-                let t = resp.text().await?;
-                println!("{t}, {market_name_hash}");
-                let price = serde_json::from_str::<MarketPrice>(&t).unwrap();
-                Ok::<_, StateError>((classid, price))
+                let price: Result<MarketPrice, _> = Self::send_request(&client, req).await;
+                Ok::<_, StateError>((asset, price))
             });
             requests.push(request);
         }
         let prices = join_all(requests).await;
-        let prices = prices
-            .into_iter()
-            .map(|a| a.unwrap().unwrap())
-            .collect();
-
+        let prices = prices.into_iter().map(|a| a.unwrap().unwrap()).collect();
         Ok(prices)
     }
 

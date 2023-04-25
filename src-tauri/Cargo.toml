@@ -27,6 +27,8 @@ serde-aux = "*"
 urlencoding = "*"
 futures = "*"
 ts-rs = "*"
+http-cache-reqwest = "0.9.0"
+reqwest-middleware = "0.2.1"
 
 [features]
 # by default Tauri runs in production mode

@@ -58,11 +58,11 @@ pub mod csgobackpack {
 pub mod steam {
     use serde::{Deserialize, Deserializer, Serialize};
     use serde_aux::prelude::deserialize_number_from_string as str_to_num;
-    use ts_rs::TS;
     use std::{
         fmt::{self, Display},
         str::FromStr,
     };
+    use ts_rs::TS;
     #[derive(Serialize, Deserialize, Clone)]
     pub struct Asset {
         pub appid: usize,
@@ -76,6 +76,22 @@ pub mod steam {
         pub amount: usize,
     }
 
+    impl Asset {
+        pub fn hydrate(self, market_item: MarketItem) -> FullAsset {
+            FullAsset {
+                name: market_item.name,
+                appid: self.appid,
+                assetid: self.assetid,
+                classid: self.classid,
+                instanceid: self.instanceid,
+                amount: self.amount,
+                icon_url: market_item.icon_url,
+                market_hash_name: market_item.market_hash_name,
+                item_type: market_item.item_type
+            }
+        }
+    }
+
     #[derive(Serialize, Deserialize, Clone)]
     pub struct MarketItem {
         #[serde(alias = "type")]
@@ -85,6 +101,20 @@ pub mod steam {
         pub classid: usize,
         pub icon_url: String,
         pub market_hash_name: String,
+    }
+
+    #[derive(Clone, Serialize, TS)]
+    #[ts(export)]
+    pub struct FullAsset {
+        pub name: String,
+        pub appid: usize,
+        pub assetid: usize,
+        pub classid: usize,
+        pub instanceid: usize,
+        pub amount: usize,
+        pub icon_url: String,
+        pub market_hash_name: String,
+        pub item_type: Option<String>,
     }
 
     #[derive(Serialize, Deserialize)]

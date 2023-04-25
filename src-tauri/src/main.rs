@@ -7,35 +7,50 @@ mod requests;
 mod state;
 mod string_serializer;
 
-use state::{ State, StateError};
+use requests::steam::{FullAsset, MarketPrice};
+use state::{State, StateError};
+use std::collections::HashMap;
 use tokio;
-use requests::steam::Asset;
-
-
-const ACC: usize = 76561198083067227;
 
 #[tauri::command]
-async fn get_user_containers(game: usize, user: usize, state: tauri::State<'_, State>) -> Result<Vec<Asset>, StateError> {
-    state.fetch_user_containers(game, user).await
+async fn get_user_containers(
+    game: usize,
+    user: String,
+    state: tauri::State<'_, State>,
+) -> Result<Vec<FullAsset>, StateError> {
+    state.fetch_user_containers(game, user.parse().unwrap()).await
 }
 
 #[tauri::command]
-async fn get_user_items(game: usize, user: usize, state: tauri::State<'_, State>) -> Result<Vec<Asset>, StateError> {
-    state.fetch_user_containers(game, user).await
+async fn get_user_items(
+    game: usize,
+    user: String,
+    dedup: bool,
+    state: tauri::State<'_, State>,
+) -> Result<Vec<FullAsset>, StateError> {
+    state.fetch_user_items(game, user.parse().unwrap(), dedup).await
 }
 
 #[tauri::command]
-async fn get_item_prices(game: usize, user: usize, state: tauri::State<'_, State>) -> Result<Vec<Asset>, StateError> {
-    state.fetch_user_containers(game, user).await
+async fn get_asset_prices(
+    assets: Vec<(usize, String)>,
+    options: Option<HashMap<String, String>>,
+    state: tauri::State<'_, State>,
+) -> Result<HashMap<usize, Result<MarketPrice, StateError>>, StateError> {
+    state.get_asset_prices(assets, options.unwrap_or_default()).await
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let state = State::new(None);
-    //state.fetch_user_containers().await?;
+    let state = State::new();
+
     tauri::Builder::default()
         .manage(state)
-        .invoke_handler(tauri::generate_handler![get_user_containers])
+        .invoke_handler(tauri::generate_handler![
+            get_user_containers,
+            get_user_items,
+            get_asset_prices
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
     Ok(())
