@@ -13,12 +13,14 @@ function update() {
     chests.value = res as FullAsset[]
     console.log(res)
   }).catch((err) => {
+    console.log('problem requesting chests', err)
     error.value = err
   })
   invoke('get_asset_prices', { assets: chests.value.map(chest => chest.classid) }).then((res) => {
     console.log(res)
     prices.value = res as { [index: number]: MarketPrice }
   }).catch((err) => {
+    console.log('problem requesting prices', err)
     error.value = err
   })
 }
@@ -28,6 +30,7 @@ function update() {
 
 <template lang="pug">
 div.c-grid.p-10
+  p {{ error }}
   div
     h1.text-2xl.font-bold.text-center.text-rose-500.mb-10 CS:GO Chest Value
     div.flex.justify-between.items-center.gap-2
@@ -40,7 +43,7 @@ div.c-grid.p-10
         h1.text-xl.font-bold {{ chest.amount }} x {{ chest.name }}
         div.flex.justify-center
           img(:src="'https://community.akamai.steamstatic.com/economy/image/' + chest.icon_url")
-        p(v-if="prices.value[chest.classid]") {{ (chest.amount * chest.price.median_price).toFixed(2) }}€
+        //p(v-if="prices.value[chest.classid]") {{ (chest.amount * chest.price.median_price).toFixed(2) }}€
 </template>
 
 <style lang="sass">
