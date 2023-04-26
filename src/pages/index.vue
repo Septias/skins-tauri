@@ -8,22 +8,35 @@ const error = ref('')
 const chests: Ref<FullAsset[]> = useStorage('chests', [])
 const prices: Ref<{ [index: number]: MarketPrice }> = useStorage('prices', {})
 
-function update() {
-  invoke('get_user_containers', { game: 730, user: user_input.value }).then((res) => {
+async function update() {
+  try {
+    const res = await invoke('get_user_containers', { game: 730, user: user_input.value })
     chests.value = res as FullAsset[]
     console.log(res)
-  }).catch((err) => {
+  }
+
+  catch (err) {
     console.log('problem requesting chests', err)
     error.value = err
-  })
-  invoke('get_asset_prices', { assets: chests.value.map(chest => chest.classid) }).then((res) => {
+  }
+  try {
+    const res = await invoke('get_asset_prices', { assets: chests.value.map(chest => [chest.classid, chest.market_hash_name]) })
     console.log(res)
-    prices.value = res as { [index: number]: MarketPrice }
-  }).catch((err) => {
+    for (const chest_id in res) {
+      const val = res[chest_id].Ok
+      if (val) {
+        prices.value[chest_id] = val
+      }
+    }
+    console.log(prices)
+  }
+  catch (err) {
     console.log('problem requesting prices', err)
     error.value = err
-  })
+  }
 }
+
+console.log(prices.value)
 
 // const total_value = chests.value.map(chest => chest.amount * (prices.value[chest.classid].median_price || 0)).reduce((a, b) => a + b, 0).toFixed(2)
 </script>
@@ -40,10 +53,12 @@ div.c-grid.p-10
       //div Total chest value: {{ total_value }}€
     div.chest-grid
       div.border.border-rose-500.rounded-xl.p-2.shadow-xl(v-for="chest in chests")
-        h1.text-xl.font-bold {{ chest.amount }} x {{ chest.name }}
+        div.flex.justify-between.items-center
+          h1.text-xl.font-bold {{ chest.amount  }} x {{ chest.name }}
+          p @ {{ prices[chest.classid].median_price.toFixed(2) }}
         div.flex.justify-center
           img(:src="'https://community.akamai.steamstatic.com/economy/image/' + chest.icon_url")
-        //p(v-if="prices.value[chest.classid]") {{ (chest.amount * chest.price.median_price).toFixed(2) }}€
+        p.text-right total value: {{(chest.amount * prices[chest.classid].median_price).toFixed(2)}}
 </template>
 
 <style lang="sass">
