@@ -116,10 +116,6 @@ impl State {
         let containers: Vec<FullAsset> = assets
             .into_iter()
             .filter(|asset| {
-                  println!("{}", asset.item_type
-                  .as_ref()
-                  .unwrap()
-                  .as_str());
                   asset.item_type
                     .as_ref()
                     .unwrap()

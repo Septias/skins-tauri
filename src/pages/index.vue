@@ -2,43 +2,61 @@
 import { invoke } from '@tauri-apps/api'
 import type { FullAsset } from 'src-tauri/bindings/FullAsset'
 import type { MarketPrice } from 'src-tauri/bindings/MarketPrice'
+import { open } from '@tauri-apps/api/shell'
+
+interface MarketPriceOnCrack extends MarketPrice {
+  error?: string
+}
+
+interface UpdatePriceResponse {
+  [index: number]: { Ok: MarketPrice | undefined; Err: string | undefined }
+}
 
 const user_input = useStorage('user_id', '')
 const error = ref('')
 const chests: Ref<FullAsset[]> = useStorage('chests', [])
-const prices: Ref<{ [index: number]: MarketPrice }> = useStorage('prices', {})
+const prices = reactive({} as { [index: number]: MarketPriceOnCrack })
 
-async function update() {
+async function update_inv() {
   try {
     const res = await invoke('get_user_containers', { game: 730, user: user_input.value })
-    chests.value = res as FullAsset[]
+    chests.value = (res as FullAsset[]).sort((a, b) => a.classid - b.classid)
     console.log(res)
   }
 
   catch (err) {
     console.log('problem requesting chests', err)
-    error.value = err
-  }
-  try {
-    const res = await invoke('get_asset_prices', { assets: chests.value.map(chest => [chest.classid, chest.market_hash_name]) })
-    console.log(res)
-    for (const chest_id in res) {
-      const val = res[chest_id].Ok
-      if (val) {
-        prices.value[chest_id] = val
-      }
-    }
-    console.log(prices)
-  }
-  catch (err) {
-    console.log('problem requesting prices', err)
-    error.value = err
+    error.value = err as string
   }
 }
 
-console.log(prices.value)
+async function update_prices() {
+  try {
+    const res: UpdatePriceResponse = await invoke('get_asset_prices', { assets: chests.value.map(chest => [chest.classid, chest.market_hash_name]) })
+    for (const chest_id in res) {
+      const marketprice = res[chest_id].Ok
+      if (marketprice) {
+        prices[chest_id] = marketprice
+      }
+      else {
+        console.log(res[chest_id])
+        prices[chest_id].error = res[chest_id].Err
+      }
+    }
+  }
+  catch (err) {
+    console.log('problem requesting prices', err)
+    error.value = err as string
+  }
+}
 
-// const total_value = chests.value.map(chest => chest.amount * (prices.value[chest.classid].median_price || 0)).reduce((a, b) => a + b, 0).toFixed(2)
+async function multisell(market_hash_name: string) {
+  open(`https://steamcommunity.com/market/multisell?appid=730&contextid=2&items%5B%5D=${market_hash_name}`)
+}
+
+update_prices()
+
+const total_value = computed(() => chests.value.map(chest => chest.amount * (prices[chest.classid]?.median_price || 0)).reduce((a, b) => a + b, 0).toFixed(6))
 </script>
 
 <template lang="pug">
@@ -49,22 +67,26 @@ div.c-grid.p-10
     div.flex.justify-between.items-center.gap-2
       div.flex.gap-2
         input.rounded.p-2.border.leading-none(v-model="user_input" alt="User ID" placeholder="User ID")
-        button.rounded.bg-rose-500.p-2.leading-none(@click="update") Update
-      //div Total chest value: {{ total_value }}€
-    div.chest-grid
-      div.border.border-rose-500.rounded-xl.p-2.shadow-xl(v-for="chest in chests")
-        div.flex.justify-between.items-center
-          h1.text-xl.font-bold {{ chest.amount  }} x {{ chest.name }}
-          p @ {{ prices[chest.classid].median_price.toFixed(2) }}
-        div.flex.justify-center
-          img(:src="'https://community.akamai.steamstatic.com/economy/image/' + chest.icon_url")
-        p.text-right total value: {{(chest.amount * prices[chest.classid].median_price).toFixed(2)}}
+        button.btn(@click="update_inv") Update Inventory
+        button.btn(@click="update_prices") Update Prices
+      div Total chest value: {{ total_value }}€
+div.chest-grid
+  div.flex.flex-col.justify-between.border.border-rose-500.rounded-xl.p-2.shadow-xl(v-for="chest in chests" :key="chest.classid")
+    div.flex.justify-between.items-center
+      h1.text-xl.font-bold {{ chest.amount  }} x {{ chest.name }}
+      p.whitespace-nowrap.font-bold(v-if="prices[chest.classid]") @ {{ prices[chest.classid].median_price.toFixed(2) }}
+    div.flex.justify-center
+      img(:src="'https://community.akamai.steamstatic.com/economy/image/' + chest.icon_url")
+
+    div.flex.justify-between
+      button.btn(@click="() => multisell(chest.market_hash_name)") Sell
+      p.text-right.font-bold(v-if="prices[chest.classid]") total value: {{(chest.amount * prices[chest.classid].median_price).toFixed(2)}}
 </template>
 
 <style lang="sass">
 .chest-grid
   display: grid
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr))
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr))
   grid-gap: 1rem
   padding: 1rem
 
