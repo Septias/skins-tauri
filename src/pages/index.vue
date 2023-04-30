@@ -62,6 +62,7 @@ const total_value = computed(() => chests.value.map(chest => chest.amount * (pri
 <template lang="pug">
 div.c-grid.p-10
   p {{ error }}
+  p hi
   div
     h1.text-2xl.font-bold.text-center.text-rose-500.mb-10 CS:GO Chest Value
     div.flex.justify-between.items-center.gap-2
@@ -72,6 +73,7 @@ div.c-grid.p-10
       div Total chest value: {{ total_value }}€
 div.chest-grid
   div.flex.flex-col.justify-between.border.border-rose-500.rounded-xl.p-2.shadow-xl(v-for="chest in chests" :key="chest.classid")
+    p.text-red.font-bold(v-if="prices[chest.classid] && prices[chest.classid].error") {{ prices[chest.classid].error }}
     div.flex.justify-between.items-center
       h1.text-xl.font-bold {{ chest.amount  }} x {{ chest.name }}
       p.whitespace-nowrap.font-bold(v-if="prices[chest.classid]") @ {{ prices[chest.classid].median_price.toFixed(2) }}
@@ -81,6 +83,8 @@ div.chest-grid
     div.flex.justify-between
       button.btn(@click="() => multisell(chest.market_hash_name)") Sell
       p.text-right.font-bold(v-if="prices[chest.classid]") total value: {{(chest.amount * prices[chest.classid].median_price).toFixed(2)}}
+.absolute.top-0.right-0.p-2.btn
+  router-link(to="/all_items") All Items
 </template>
 
 <style lang="sass">

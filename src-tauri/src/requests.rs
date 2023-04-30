@@ -1,13 +1,16 @@
 pub mod csgobackpack {
     use serde::{Deserialize, Serialize};
     use serde_aux::prelude::deserialize_number_from_string as str_to_num;
+    use ts_rs::TS;
     use std::collections::HashMap;
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, TS)]
+    #[ts(export)]
     pub struct MarketItem {
         #[serde(alias = "type")]
         pub item_type: Option<String>,
         pub name: String,
+        pub icon_url: String,
         #[serde(deserialize_with = "str_to_num")]
         pub classid: usize,
     }
@@ -17,11 +20,6 @@ pub mod csgobackpack {
         pub success: bool,
         pub currency: String,
         pub items_list: HashMap<String, MarketItem>,
-    }
-
-    pub async fn _get_all_csgo_items() -> anyhow::Result<ItemListResponse> {
-        let resp = reqwest::get("http://csgobackpack.net/api/GetItemsList/v2/").await?;
-        Ok(serde_json::from_str(&resp.text().await?).unwrap())
     }
 
     #[derive(Serialize, Deserialize)]
@@ -125,6 +123,8 @@ pub mod steam {
         pub descriptions: Vec<MarketItem>,
     }
 
+
+    pub type ItemPrice = Vec<(String, f32, String)>;
     #[derive(Serialize, Deserialize)]
     pub struct PriceHistoryResponse {
         pub success: bool,

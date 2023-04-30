@@ -1,18 +1,19 @@
 use anyhow::anyhow;
 use futures::future::join_all;
-use http_cache_reqwest::{HttpCache, Cache, CacheMode, CACacheManager};
+use http_cache_reqwest::{CACacheManager, Cache, CacheMode, HttpCache};
 use itertools::Itertools;
 use reqwest::{Client, Request};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::HashMap,
-};
+use std::collections::HashMap;
 use thiserror::Error;
 
 use crate::{
-    requests::steam::{
-        Asset, FullAsset, MarketPrice, PriceHistoryResponse, UserInventoryResponse,
+    requests::{
+        csgobackpack::{ItemListResponse, ItemPriceResponse, MarketItem},
+        steam::{
+            Asset, FullAsset, ItemPrice, MarketPrice, PriceHistoryResponse, UserInventoryResponse,
+        },
     },
     string_serializer,
 };
@@ -41,12 +42,12 @@ impl State {
     pub fn new() -> Self {
         Self {
             client: ClientBuilder::new(Client::new())
-            .with(Cache(HttpCache {
-              mode: CacheMode::Default,
-              manager: CACacheManager::default(),
-              options: None,
-            }))
-            .build()
+                .with(Cache(HttpCache {
+                    mode: CacheMode::Default,
+                    manager: CACacheManager::default(),
+                    options: None,
+                }))
+                .build(),
         }
     }
 
@@ -105,7 +106,7 @@ impl State {
             .collect_vec())
     }
 
-    // Get all containers the user has.
+    // Get all containers a user has.
     // This deduplicates the items fetched.
     pub async fn fetch_user_containers(
         &self,
@@ -115,19 +116,13 @@ impl State {
         let assets: Vec<FullAsset> = self.fetch_user_items(game, acc, true).await?;
         let containers: Vec<FullAsset> = assets
             .into_iter()
-            .filter(|asset| {
-                  asset.item_type
-                    .as_ref()
-                    .unwrap()
-                    .as_str()
-                    == "Base Grade Container"
-            })
+            .filter(|asset| asset.item_type.as_ref().unwrap().as_str() == "Base Grade Container")
             .collect();
         Ok(containers)
     }
 
-    // Get a asset prices from steam market
-    // Options can contain 'currency' 'appid' and probably more...
+    // Get an asset prices from steam market.
+    // Options can contain 'currency', 'appid' and probably more...
     pub async fn get_asset_prices(
         &self,
         assets: Vec<(usize, String)>,
@@ -159,10 +154,63 @@ impl State {
         Ok(prices)
     }
 
-    pub async fn _get_price_history(marke_hash_name: &str) -> anyhow::Result<PriceHistoryResponse> {
-        let url = format!("https://steamcommunity.com/market/pricehistory/?country=DE&currency=3&appid=730&market_hash_name={}", urlencoding::encode(marke_hash_name));
-        let resp = reqwest::get(&url).await?;
-        Ok(serde_json::from_str(&resp.text().await?).unwrap())
+    // Get an asset prices from steam market.
+    // Options can contain 'currency', 'appid' and probably more...
+    pub async fn get_asset_price_histories(
+        &self,
+        assets: Vec<(usize, String)>,
+        options: HashMap<String, String>,
+    ) -> Result<HashMap<usize, Result<ItemPrice, StateError>>, StateError> {
+        let mut requests = vec![];
+        let mut used_options: HashMap<String, String> = HashMap::from_iter([
+            ("appid".to_string(), "730".to_string()),
+            ("currency".to_string(), "3".to_string()),
+            ("country".to_string(), "DE".to_string()),
+        ]);
+        used_options.extend(options);
+
+        for (asset, market_hash_name) in assets.into_iter() {
+            let req = self
+                .client
+                .get("https://steamcommunity.com/market/pricehistory/")
+                .query(&used_options)
+                .query(&[("market_hash_name".to_string(), market_hash_name)])
+                .build()?;
+            let client = self.client.clone();
+            let request = tokio::spawn(async move {
+                let price: Result<PriceHistoryResponse, _> = Self::send_request(&client, req).await;
+                Ok::<_, StateError>((asset, price))
+            });
+            requests.push(request);
+        }
+        let prices = join_all(requests).await;
+        let prices = prices
+            .into_iter()
+            .map(|a| a.unwrap().unwrap())
+            .map(|(item, request)| (item, request.map(|ph| ph.prices)))
+            .collect();
+        Ok(prices)
+    }
+
+    pub async fn get_all_csgo_items(&self) -> Result<HashMap<String, MarketItem>, StateError> {
+        let resp = self.client.get("http://csgobackpack.net/api/GetItemsList/v2/").send().await?;
+        Ok(serde_json::from_str::<ItemListResponse>(&resp.text().await?).unwrap().items_list)
+    }
+
+    pub async fn get_all_csgo_containers(&self) -> Result<HashMap<usize, MarketItem>, StateError> {
+        let items = self.get_all_csgo_items().await?;
+        let chests = items.into_iter().filter_map(|(_name, item)| {
+            if let Some(item_name) = &item.item_type {
+              if item_name == "Container" {
+                  Some((item.classid.clone(), item))
+              } else {
+                  None
+              }
+            } else {
+              None
+            }
+        }).collect();
+        Ok(chests)
     }
 }
 

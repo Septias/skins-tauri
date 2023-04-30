@@ -3,7 +3,7 @@
 
 <template>
   <div class="text-white">
-    whoops
+    whoopsidoo
   </div>
 </template>
 
