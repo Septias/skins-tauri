@@ -176,8 +176,7 @@ impl State {
                 .get("https://steamcommunity.com/market/pricehistory")
                 .query(&used_options)
                 .query(&[("market_hash_name".to_string(), market_hash_name)])
-                .query(&[("Cookie:", "steamLoginSecure=76561198083067227%7C%7CeyAidHlwIjogIkpXVCIsICJhbGciOiAiRWREU0EiIH0.eyAiaXNzIjogInI6MEQyMV8yMjcxRkM2Rl8yODU2NyIsICJzdWIiOiAiNzY1NjExOTgwODMwNjcyMjciLCAiYXVkIjogWyAid2ViIiBdLCAiZXhwIjogMTY4ODA1MjYxMiwgIm5iZiI6IDE2NzkzMjU1OTQsICJpYXQiOiAxNjg3OTY1NTk0LCAianRpIjogIjBEMUFfMjJDNTA3QjBfQjM3OTgiLCAib2F0IjogMTY4MjUwMTk3NCwgInJ0X2V4cCI6IDE3MDA1NTMxMzQsICJwZXIiOiAwLCAiaXBfc3ViamVjdCI6ICI5NC4yMTcuNDIuMTUzIiwgImlwX2NvbmZpcm1lciI6ICI5NC4yMTcuNDIuMTUzIiB9.AEddxUX1x5Uy77Qc-RYUzgm84cLwOXGlqAJLHM7gLnjpFnUXx2g7o8yU_WNG1oJ8w1dYX4ywF3aQwEyVBxcBCA; sessionid=69d11820b3c750fbac6e2b70
-              ")])
+                .header("Cookie", "sessionid=24ab9a47f7bab28160ff0ac4; steamCountry=DE%7Cfbc3658791259f811e8fe2460ec9c18f; timezoneOffset=7200,0; steamLoginSecure=76561198083067227%7C%7CeyAidHlwIjogIkpXVCIsICJhbGciOiAiRWREU0EiIH0.eyAiaXNzIjogInI6MEQyQl8yMjcxRkNFNl80OEQ4NiIsICJzdWIiOiAiNzY1NjExOTgwODMwNjcyMjciLCAiYXVkIjogWyAid2ViIiBdLCAiZXhwIjogMTY4ODA3NzE1MCwgIm5iZiI6IDE2NzkzNDkwOTIsICJpYXQiOiAxNjg3OTg5MDkyLCAianRpIjogIjBEMUFfMjJDNTA3QzBfRkE0NDgiLCAib2F0IjogMTY4MjY3NTA4NSwgInJ0X2V4cCI6IDE3MDA3ODE5NDksICJwZXIiOiAwLCAiaXBfc3ViamVjdCI6ICIxNTYuNjcuMTM2LjcxIiwgImlwX2NvbmZpcm1lciI6ICIxNTYuNjcuMTM2LjcxIiB9.-cDGX6ppcT9xDb3q6UU6OHuEUYKjPxF8ohCX-kstSddM2khL71pG70zG9O4g7aypUOGfnOBu9Bt30NA9K7mfBQ")
                 .build()?;
             println!("{:?}, {}", req, req.url());
             let client = self.client.clone();
@@ -246,7 +245,8 @@ mod tests {
     #[tokio::test]
     async fn test_simple() {
       let state = State::new();
-      print!("{:?}", state.get_asset_price_histories(vec![(384801285, "Winter Offensive Weapon Case".to_string())], Default::default()).await.unwrap())
+      let requests = state.get_asset_price_histories(vec![(384801285, "Winter Offensive Weapon Case".to_string())], Default::default()).await.unwrap();
+      requests.into_values().for_each(|res| {res.unwrap();});
     }
 }
 

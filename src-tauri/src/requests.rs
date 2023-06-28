@@ -125,11 +125,12 @@ pub mod steam {
 
 
     pub type ItemPrice = Vec<(String, f32, String)>;
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, TS)]
+    #[ts(export)]
     pub struct PriceHistoryResponse {
         pub success: bool,
         pub price_prefix: String,
-        pub price_suffix: char,
+        pub price_suffix: String,
         pub prices: Vec<(String, f32, String)>,
     }
 
