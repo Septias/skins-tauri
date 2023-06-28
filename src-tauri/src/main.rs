@@ -46,6 +46,7 @@ async fn get_asset_price_history(
     options: Option<HashMap<String, String>>,
     state: tauri::State<'_, State>,
 ) -> Result<HashMap<usize, Result<ItemPrice, StateError>>, StateError> {
+    println!("{assets:?}, {options:?}");
     state.get_asset_price_histories(assets, options.unwrap_or_default()).await
 }
 
@@ -59,7 +60,7 @@ async fn get_all_csgo_containers(state: tauri::State<'_, State>) -> Result<HashM
     state.get_all_csgo_containers().await
 }
 
-static CONTAINTERS: [&str; 30] = ["Winter Offensive Weapon Case",
+static CONTAINTERS: [&str; 1] = ["Winter Offensive Weapon Case"];/*,
 "Operation Phoenix Weapon Case",
 "Huntsman Weapon Case",
 "Operation Breakout Weapon Case",
@@ -88,7 +89,7 @@ static CONTAINTERS: [&str; 30] = ["Winter Offensive Weapon Case",
 "Fracture Case",
 "Snakebite Case",
 "Revolution Case",
-"Recoil Case"];
+"Recoil Case"]; */
 
 #[tauri::command]
 async fn get_all_csgo_basic_cases(state: tauri::State<'_, State>) -> Result<HashMap<usize, MarketItem>, StateError> {

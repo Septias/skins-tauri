@@ -141,6 +141,7 @@ impl State {
                 .get("https://steamcommunity.com/market/priceoverview/")
                 .query(&used_options)
                 .query(&[("market_hash_name".to_string(), market_hash_name)])
+                .header("Cookie", "steamLoginSecure=76561198083067227%7C%7CeyAidHlwIjogIkpXVCIsICJhbGciOiAiRWREU0EiIH0.eyAiaXNzIjogInI6MEQyMV8yMjcxRkM2Rl8yODU2NyIsICJzdWIiOiAiNzY1NjExOTgwODMwNjcyMjciLCAiYXVkIjogWyAid2ViIiBdLCAiZXhwIjogMTY4ODA1MjYxMiwgIm5iZiI6IDE2NzkzMjU1OTQsICJpYXQiOiAxNjg3OTY1NTk0LCAianRpIjogIjBEMUFfMjJDNTA3QjBfQjM3OTgiLCAib2F0IjogMTY4MjUwMTk3NCwgInJ0X2V4cCI6IDE3MDA1NTMxMzQsICJwZXIiOiAwLCAiaXBfc3ViamVjdCI6ICI5NC4yMTcuNDIuMTUzIiwgImlwX2NvbmZpcm1lciI6ICI5NC4yMTcuNDIuMTUzIiB9.AEddxUX1x5Uy77Qc-RYUzgm84cLwOXGlqAJLHM7gLnjpFnUXx2g7o8yU_WNG1oJ8w1dYX4ywF3aQwEyVBxcBCA; sessionid=69d11820b3c750fbac6e2b70")
                 .build()?;
             let client = self.client.clone();
             let request = tokio::spawn(async move {
@@ -172,10 +173,13 @@ impl State {
         for (asset, market_hash_name) in assets.into_iter() {
             let req = self
                 .client
-                .get("https://steamcommunity.com/market/pricehistory/")
+                .get("https://steamcommunity.com/market/pricehistory")
                 .query(&used_options)
                 .query(&[("market_hash_name".to_string(), market_hash_name)])
+                .query(&[("Cookie:", "steamLoginSecure=76561198083067227%7C%7CeyAidHlwIjogIkpXVCIsICJhbGciOiAiRWREU0EiIH0.eyAiaXNzIjogInI6MEQyMV8yMjcxRkM2Rl8yODU2NyIsICJzdWIiOiAiNzY1NjExOTgwODMwNjcyMjciLCAiYXVkIjogWyAid2ViIiBdLCAiZXhwIjogMTY4ODA1MjYxMiwgIm5iZiI6IDE2NzkzMjU1OTQsICJpYXQiOiAxNjg3OTY1NTk0LCAianRpIjogIjBEMUFfMjJDNTA3QjBfQjM3OTgiLCAib2F0IjogMTY4MjUwMTk3NCwgInJ0X2V4cCI6IDE3MDA1NTMxMzQsICJwZXIiOiAwLCAiaXBfc3ViamVjdCI6ICI5NC4yMTcuNDIuMTUzIiwgImlwX2NvbmZpcm1lciI6ICI5NC4yMTcuNDIuMTUzIiB9.AEddxUX1x5Uy77Qc-RYUzgm84cLwOXGlqAJLHM7gLnjpFnUXx2g7o8yU_WNG1oJ8w1dYX4ywF3aQwEyVBxcBCA; sessionid=69d11820b3c750fbac6e2b70
+              ")])
                 .build()?;
+            println!("{:?}, {}", req, req.url());
             let client = self.client.clone();
             let request = tokio::spawn(async move {
                 let price: Result<PriceHistoryResponse, _> = Self::send_request(&client, req).await;
@@ -233,3 +237,16 @@ fn dedup_assets(assets: &Vec<Asset>) -> Vec<Asset> {
         .into_values()
         .collect()
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_simple() {
+      let state = State::new();
+      print!("{:?}", state.get_asset_price_histories(vec![(384801285, "Winter Offensive Weapon Case".to_string())], Default::default()).await.unwrap())
+    }
+}
+

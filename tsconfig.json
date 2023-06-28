@@ -18,10 +18,7 @@
       "vitest",
       "vite/client",
       "vue/ref-macros",
-      "vite-plugin-pages/client",
-      "vite-plugin-vue-component-preview/client",
-      "vite-plugin-vue-layouts/client",
-      "vite-plugin-pwa/client",
+      "@vue/language-plugin-pug",
       "unplugin-vue-macros/macros-global"
     ],
     "paths": {
@@ -32,7 +29,7 @@
     "plugins": [
       "@vue-macros/volar/define-model",
       "@vue-macros/volar/define-slots",
-      "@volar/vue-language-plugin-pug"
+      "@vue/language-plugin-pug"
     ]
   },
   "exclude": ["dist", "node_modules"]
