@@ -43,7 +43,7 @@ async function get_all_containers() {
 <template lang="pug">
 div.p-5
   router-link.btn.mr-2(to="/") Back
-  button.btn(@click="get_all_containers") Get all containers
+  button.btn(@click="get_all_containers") Update
 
   p.text-center.text-red-800.font-bold {{ error }}
   h1.text-2xl.font-bold.text-center.text-rose-500.mb-5 CS:GO Chest Statistics

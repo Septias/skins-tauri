@@ -19,10 +19,21 @@ const prices = reactive({} as { [index: number]: MarketPriceOnCrack })
 
 async function update_inv() {
   error.value = ''
+
+  if (!user_input.value.length) {
+    console.log('No user id given')
+    error.value = 'No user id given.'
+    return
+  }
+
   try {
-    const res = await invoke('get_user_containers', { game: 730, user: user_input.value })
-    chests.value = (res as FullAsset[]).sort((a, b) => a.classid - b.classid)
-    console.log(res)
+    const res: FullAsset[] = await invoke('get_user_containers', { game: 730, user: user_input.value })
+    if (!res.length) {
+      console.log('User has no chests')
+      error.value = 'User has no chests.'
+      return
+    }
+    chests.value = res.sort((a, b) => a.classid - b.classid)
   }
 
   catch (err) {
@@ -47,7 +58,6 @@ async function update_prices() {
         prices[chest_id] = marketprice
       }
       else {
-        console.log(res[chest_id])
         prices[chest_id].error = res[chest_id].Err
       }
     }
@@ -79,17 +89,17 @@ div.c-grid.p-10
 div.chest-grid
   div.flex.flex-col.justify-between.border.border-rose-500.rounded-xl.p-2.shadow-xl(v-for="chest in chests" :key="chest.classid")
     p.text-red.font-bold(v-if="prices[chest.classid] && prices[chest.classid].error") {{ prices[chest.classid].error }}
-    div.flex.justify-between.items-center
-      h1.text-xl.font-bold {{ chest.amount  }} x {{ chest.name }}
-      p.whitespace-nowrap.font-bold(v-if="prices[chest.classid]") @ {{ prices[chest.classid].median_price.toFixed(2) }}
+    h1.text-xl.font-bold {{ chest.name }}
+    p.whitespace-nowrap.font-bold(v-if="prices[chest.classid]")
+      | {{ chest.amount }} x {{ prices[chest.classid].median_price.toFixed(2) }}€
+      | =  {{(chest.amount * prices[chest.classid].median_price).toFixed(2)}}€
     div.flex.justify-center
       img(:src="'https://community.akamai.steamstatic.com/economy/image/' + chest.icon_url")
 
     div.flex.justify-between
       button.btn(@click="() => multisell(chest.market_hash_name)") Sell
-      p.text-right.font-bold(v-if="prices[chest.classid]") total value: {{(chest.amount * prices[chest.classid].median_price).toFixed(2)}}
 .absolute.top-0.right-0.p-2.btn.m-5
-  router-link(to="/all_items") All Items
+  router-link(to="/all_items") All chests
 </template>
 
 <style lang="sass">
