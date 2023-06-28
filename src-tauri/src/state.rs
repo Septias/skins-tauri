@@ -84,7 +84,6 @@ impl State {
             .query(&[("l", "english"), ("count", "5000")])
             .build()?;
 
-        println!("{}", req.url());
         let assets: UserInventoryResponse = Self::send_request(&self.client, req).await?;
 
         let mut item_descriptions: HashMap<usize, _> = assets
@@ -178,7 +177,6 @@ impl State {
                 .query(&[("market_hash_name".to_string(), market_hash_name)])
                 .header("Cookie", "sessionid=24ab9a47f7bab28160ff0ac4; steamCountry=DE%7Cfbc3658791259f811e8fe2460ec9c18f; timezoneOffset=7200,0; steamLoginSecure=76561198083067227%7C%7CeyAidHlwIjogIkpXVCIsICJhbGciOiAiRWREU0EiIH0.eyAiaXNzIjogInI6MEQyQl8yMjcxRkNFNl80OEQ4NiIsICJzdWIiOiAiNzY1NjExOTgwODMwNjcyMjciLCAiYXVkIjogWyAid2ViIiBdLCAiZXhwIjogMTY4ODA3NzE1MCwgIm5iZiI6IDE2NzkzNDkwOTIsICJpYXQiOiAxNjg3OTg5MDkyLCAianRpIjogIjBEMUFfMjJDNTA3QzBfRkE0NDgiLCAib2F0IjogMTY4MjY3NTA4NSwgInJ0X2V4cCI6IDE3MDA3ODE5NDksICJwZXIiOiAwLCAiaXBfc3ViamVjdCI6ICIxNTYuNjcuMTM2LjcxIiwgImlwX2NvbmZpcm1lciI6ICIxNTYuNjcuMTM2LjcxIiB9.-cDGX6ppcT9xDb3q6UU6OHuEUYKjPxF8ohCX-kstSddM2khL71pG70zG9O4g7aypUOGfnOBu9Bt30NA9K7mfBQ")
                 .build()?;
-            println!("{:?}, {}", req, req.url());
             let client = self.client.clone();
             let request = tokio::spawn(async move {
                 let price: Result<PriceHistoryResponse, _> = Self::send_request(&client, req).await;

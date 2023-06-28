@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { invoke } from '@tauri-apps/api'
 import type { MarketItem } from 'src-tauri/bindings/MarketItem'
-import type {PriceHistoryResponse} from 'src-tauri/bindings/PriceHistoryResponse'
+import type { PriceHistoryResponse } from 'src-tauri/bindings/PriceHistoryResponse'
 
 const error = ref('')
 const chests: Ref<MarketItemOnCrack[]> = useStorage('all_items', [])
@@ -11,7 +11,7 @@ export interface MarketItemOnCrack extends MarketItem {
   values?: [string, number, string][]
 }
 
-async function get_price_history(assets: Record<string, any>[]): Promise<Record<number, {Ok: PriceHistoryResponse} | {Error: string}>[]> {
+async function get_price_history(assets: Record<string, any>[]): Promise<Record<number, { Ok: PriceHistoryResponse } | { Error: string }>[]> {
   return await invoke('get_asset_price_history', { assets })
 }
 
@@ -19,14 +19,15 @@ async function get_all_containers() {
   try {
     const res: any = await invoke('get_all_csgo_basic_cases')
     const prices = await get_price_history(Object.entries(res).map(([classid, item]) => [Number(classid), item.name]))
-    console.log(prices);
+    console.log(prices)
 
     for (const [id, value] of Object.entries(prices)) {
-      console.log(id, value);
+      console.log(id, value)
 
       if (value.Ok) {
         res[id].values = value.Ok
-      } else {
+      }
+      else {
         res[id].error = value.Error
       }
     }
@@ -41,12 +42,13 @@ async function get_all_containers() {
 
 <template lang="pug">
 div.p-5
+  router-link.btn.mr-2(to="/") Back
   button.btn(@click="get_all_containers") Get all containers
-  //p.text-center.text-red-800.font-bold {{ error }}
+
+  p.text-center.text-red-800.font-bold {{ error }}
   h1.text-2xl.font-bold.text-center.text-rose-500.mb-5 CS:GO Chest Statistics
   div.chest-grid
     chest(v-for="chest in chests" :key="chest.classid" :chest="chest")
-
 </template>
 
 <style lang="sass">

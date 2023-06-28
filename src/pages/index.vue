@@ -18,6 +18,7 @@ const chests: Ref<FullAsset[]> = useStorage('chests', [])
 const prices = reactive({} as { [index: number]: MarketPriceOnCrack })
 
 async function update_inv() {
+  error.value = ''
   try {
     const res = await invoke('get_user_containers', { game: 730, user: user_input.value })
     chests.value = (res as FullAsset[]).sort((a, b) => a.classid - b.classid)
@@ -31,10 +32,11 @@ async function update_inv() {
 }
 
 async function update_prices() {
-  if (!chests.value.length) {
-    console.log('no chests')
-    error.value = 'No chests found.'
+  error.value = ''
 
+  if (!chests.value.length) {
+    console.log('No chests')
+    error.value = 'No chests found.'
     return
   }
   try {
