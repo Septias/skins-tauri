@@ -10,7 +10,7 @@ use thiserror::Error;
 
 use crate::{
     requests::{
-        csgobackpack::{ItemListResponse, ItemPriceResponse, MarketItem},
+        csgobackpack::{ItemListResponse, MarketItem},
         steam::{
             Asset, FullAsset, ItemPrice, MarketPrice, PriceHistoryResponse, UserInventoryResponse,
         },

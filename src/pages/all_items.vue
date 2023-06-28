@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { invoke } from '@tauri-apps/api'
 import type { MarketItem } from 'src-tauri/bindings/MarketItem'
-import type { PriceHistoryResponse } from 'src-tauri/bindings/PriceHistoryResponse'
 
 const error = ref('')
 const chests: Ref<MarketItemOnCrack[]> = useStorage('all_items', [])
@@ -11,24 +10,25 @@ export interface MarketItemOnCrack extends MarketItem {
   values?: [string, number, string][]
 }
 
-async function get_price_history(assets: Record<string, any>[]): Promise<Record<number, { Ok: PriceHistoryResponse } | { Error: string }>[]> {
+async function get_price_history(assets: Record<string, any>[]): Promise<Record<number, { Ok: [string, number, string][] } | { Error: string }>> {
   return await invoke('get_asset_price_history', { assets })
+}
+
+function isOkayItemPrice(thing: any): thing is { Ok: [string, number, string][] } {
+  return Object.prototype.hasOwnProperty.call(thing, 'Ok')
 }
 
 async function get_all_containers() {
   try {
-    const res: any = await invoke('get_all_csgo_basic_cases')
+    const res: Record<string, MarketItemOnCrack> = await invoke('get_all_csgo_basic_cases')
+    console.log(res)
     const prices = await get_price_history(Object.entries(res).map(([classid, item]) => [Number(classid), item.name]))
-    console.log(prices)
-
     for (const [id, value] of Object.entries(prices)) {
-      console.log(id, value)
-
-      if (value.Ok) {
-        res[id].values = value.Ok
+      if (isOkayItemPrice(value)) {
+        res[Number(id)].values = value.Ok
       }
       else {
-        res[id].error = value.Error
+        res[Number(id)].error = value.Error
       }
     }
     chests.value = (Object.values(res) as MarketItemOnCrack[]).sort((a, b) => a.classid - b.classid)
