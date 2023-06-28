@@ -59,6 +59,49 @@ async fn get_all_csgo_containers(state: tauri::State<'_, State>) -> Result<HashM
     state.get_all_csgo_containers().await
 }
 
+static CONTAINTERS: [&str; 30] = ["Winter Offensive Weapon Case",
+"Operation Phoenix Weapon Case",
+"Huntsman Weapon Case",
+"Operation Breakout Weapon Case",
+"Operation Vanguard Weapon Case",
+"Chroma Case",
+"Chroma 2 Case",
+"Falchion Case",
+"Shadow Case",
+"Revolver Case",
+"Operation Wildfire Case",
+"Chroma 3 Case",
+"Gamma Case",
+"Gamma 2 Case",
+"Glove Case",
+"Spectrum Case",
+"Operation Hydra Case",
+"Spectrum 2 Case",
+"Clutch Case",
+"Horizon Case",
+"Danger Zone Case",
+"Prisma Case",
+"CS20 Case",
+"Shattered Web Case",
+"Prisma 2 Case",
+"Operation Broken Fang Case",
+"Fracture Case",
+"Snakebite Case",
+"Revolution Case",
+"Recoil Case"];
+
+#[tauri::command]
+async fn get_all_csgo_basic_cases(state: tauri::State<'_, State>) -> Result<HashMap<usize, MarketItem>, StateError> {
+    Ok(state.get_all_csgo_containers().await?.into_iter().filter_map(|(_name, item)| {
+      if CONTAINTERS.contains(&item.name.as_str()) {
+          Some((item.classid.clone(), item))
+      } else {
+          None
+      }
+  }).collect())
+}
+
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let state = State::new();
@@ -71,7 +114,8 @@ async fn main() -> anyhow::Result<()> {
             get_asset_prices,
             get_asset_price_history,
             get_all_csgo_items,
-            get_all_csgo_containers
+            get_all_csgo_containers,
+            get_all_csgo_basic_cases
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
