@@ -13,9 +13,7 @@ async function get_all_containers() {
   console.log('updating all containers')
 
   try {
-    const res: any = await invoke('get_all_csgo_containers')
-    console.log(res)
-
+    const res: any = await invoke('get_all_csgo_basic_cases')
     chests.value = (Object.values(res) as MarketItemOnCrack[]).sort((a, b) => a.classid - b.classid)
   }
   catch (err) {
@@ -23,22 +21,19 @@ async function get_all_containers() {
     error.value = err as string
   }
 }
-
-get_all_containers()
 </script>
 
 <template lang="pug">
-button.btn(@click="get_all_containers") Get all containers
-div.c-grid.p-10
-  p {{ error }}
-  div
-    h1.text-2xl.font-bold.text-center.text-rose-500.mb-10 CS:GO Chest Statistics
-div.chest-grid
-  div.flex.flex-col.justify-between.border.border-rose-500.rounded-xl.p-2.shadow-xl(v-for="chest in chests" :key="chest.classid")
-    p.text-red.font-bold(v-if="chest.error") {{ chest.error }}
-    div.flex.justify-between.items-center {{ chest.name }}
-    div.flex.justify-center
-      img(:src="'https://community.akamai.steamstatic.com/economy/image/' + chest.icon_url")
+div.p-5
+  button.btn(@click="get_all_containers") Get all containers
+  p.text-center.text-red-800.font-bold {{ error }}
+  h1.text-2xl.font-bold.text-center.text-rose-500.mb-5 CS:GO Chest Statistics
+  div.chest-grid
+    div.flex.flex-col.justify-between.border.border-rose-500.rounded-xl.p-2.shadow-xl(v-for="chest in chests" :key="chest.classid")
+      p.text-red.font-bold(v-if="chest.error") {{ chest.error }}
+      div.flex.justify-between.items-center {{ chest.name }}
+      div.flex.justify-center
+        img(:src="'https://community.akamai.steamstatic.com/economy/image/' + chest.icon_url")
 </template>
 
 <style lang="sass">
