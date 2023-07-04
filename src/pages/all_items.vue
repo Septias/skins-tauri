@@ -3,7 +3,14 @@ import { invoke } from '@tauri-apps/api'
 import type { MarketItem } from 'src-tauri/bindings/MarketItem'
 
 const error = ref('')
-const chests: Ref<MarketItemOnCrack[]> = useStorage('all_items', [])
+const chests: Ref<MarketItemOnCrack[]> = ref('all_items', [])
+
+if (import.meta.env.DEV) {
+  import('./mock').then((mock) => {
+    console.log(mock.default)
+    chests.value = mock.default as MarketItemOnCrack[]
+  })
+}
 
 export interface MarketItemOnCrack extends MarketItem {
   error?: string
@@ -42,11 +49,11 @@ async function get_all_containers() {
 
 <template lang="pug">
 div.p-5
-  router-link.btn.mr-2(to="/") Back
-  button.btn(@click="get_all_containers") Update
-
+  .flex
+    router-link.leading-none.btn.mr-2(to="/") Back
+    button.btn(@click="get_all_containers") Update
   p.text-center.text-red-800.font-bold {{ error }}
-  h1.text-2xl.font-bold.text-center.text-rose-500.mb-5 CS:GO Chest Statistics
+  h1.text-2xl.font-bold.text-center.text-rose-500.mb-5 CS:GO Chest Stocks
   div.chest-grid
     chest(v-for="chest in chests" :key="chest.classid" :chest="chest")
 </template>
@@ -54,7 +61,7 @@ div.p-5
 <style lang="sass">
 .chest-grid
   display: grid
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr))
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr))
   grid-gap: 1rem
   padding: 1rem
 

@@ -29,6 +29,9 @@ dependencies:
   chartjs-adapter-moment:
     specifier: ^1.0.1
     version: 1.0.1(chart.js@4.3.0)(moment@2.29.4)
+  chartjs-plugin-zoom:
+    specifier: ^2.0.1
+    version: 2.0.1(chart.js@4.3.0)
   moment:
     specifier: ^2.29.4
     version: 2.29.4
@@ -3242,7 +3245,7 @@ packages:
   /acorn-globals@7.0.1:
     resolution: {integrity: sha512-umOSDSDrfHbTNPuNpC2NSnnA3LUrqpevPb4T9jRx4MagXNS0rs+gwiTcAvqCRmsD6utzsrzNt+ebm00SNWiC3Q==}
     dependencies:
-      acorn: 8.8.2
+      acorn: 8.9.0
       acorn-walk: 8.2.0
     dev: true
 
@@ -3714,6 +3717,15 @@ packages:
     dependencies:
       chart.js: 4.3.0
       moment: 2.29.4
+    dev: false
+
+  /chartjs-plugin-zoom@2.0.1(chart.js@4.3.0):
+    resolution: {integrity: sha512-ogOmLu6e+Q7E1XWOCOz9YwybMslz9qNfGV2a+qjfmqJYpsw5ZMoRHZBUyW+NGhkpQ5PwwPA/+rikHpBZb7PZuA==}
+    peerDependencies:
+      chart.js: '>=3.2.0'
+    dependencies:
+      chart.js: 4.3.0
+      hammerjs: 2.0.8
     dev: false
 
   /check-error@1.0.2:
@@ -5220,6 +5232,11 @@ packages:
     dependencies:
       duplexer: 0.1.2
     dev: true
+
+  /hammerjs@2.0.8:
+    resolution: {integrity: sha512-tSQXBXS/MWQOn/RKckawJ61vvsDpCom87JgxiYdGwHdOa0ht0vzUWDlfioofFCRU0L+6NGDt6XzbgoJvZkMeRQ==}
+    engines: {node: '>=0.8.0'}
+    dev: false
 
   /handle-thing@2.0.1:
     resolution: {integrity: sha512-9Qn4yBxelxoh2Ow62nP+Ka/kMnOXRi8BXnRaUwezLNhqelnN49xKz4F/dPP8OYLxLxq6JDtZb2i9XznUQbNPTg==}

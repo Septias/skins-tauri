@@ -3,6 +3,7 @@ import type { PropType } from 'vue'
 import Chart from 'chart.js/auto'
 import type { MarketItemOnCrack } from '../pages/all_items.vue'
 import 'chartjs-adapter-moment'
+import zoomPlugin from 'chartjs-plugin-zoom';
 
 const props = defineProps({
   chest: {
@@ -14,28 +15,51 @@ const props = defineProps({
 const chart = ref()
 let myChart: any
 
+Chart.register(zoomPlugin)
+
 onMounted(() => {
   if (props.chest.values) {
+    const data = props.chest.values.map(([time, median]) => ({ x: new Date(time), y: median }))
     myChart = new Chart(chart.value, {
       type: 'line',
       data: {
         labels: [],
         datasets: [{
           label: 'Price',
-          data: props.chest.values.map(([time, median]) => ({ x: time, y: median })),
+          data,
+          tension: 0.1,
         }],
       },
       options: {
         scales: {
           x: {
             type: 'time',
-            min: Date.now() - (3 * 24 * 60 * 60 * 1000),
-            max: Date.now(),
           },
         },
+        plugins: {
+          zoom: {
+            zoom: {
+              wheel: {
+                enabled: true,
+                // modifierKey: 'shift',
+              },
+              pinch: {
+                enabled: true
+              },
+              mode: 'xy',
+            },
+            pan: {
+              enabled: true,
+              mode: 'xy',
+            }
+          }
+        }
       },
     })
   }
+})
+onUnmounted(() => {
+  myChart.destroy()
 })
 </script>
 

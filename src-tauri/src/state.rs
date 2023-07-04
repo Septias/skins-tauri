@@ -188,7 +188,7 @@ impl State {
         let prices = prices
             .into_iter()
             .map(|a| a.unwrap().unwrap())
-            .map(|(item, request)| (item, request.map(|ph| ph.prices)))
+            .map(|(item, request)| (item, request.map(|ph| ph.prices[ph.prices.len() - 500..].to_vec())))
             .collect();
         Ok(prices)
     }

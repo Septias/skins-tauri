@@ -20,6 +20,7 @@
     "@vueuse/head": "^1.1.26",
     "chart.js": "^4.3.0",
     "chartjs-adapter-moment": "^1.0.1",
+    "chartjs-plugin-zoom": "^2.0.1",
     "moment": "^2.29.4",
     "nprogress": "^0.2.0",
     "pinia": "^2.1.4",
