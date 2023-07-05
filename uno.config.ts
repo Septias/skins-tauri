@@ -47,6 +47,6 @@ export default defineConfig({
     transformerVariantGroup(),
   ],
   shortcuts: {
-    btn: 'rounded bg-rose-500 p-2 leading-none',
+    btn: 'rounded bg-red-800 p-2 leading-none',
   },
 })

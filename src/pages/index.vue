@@ -79,7 +79,7 @@ const total_value = computed(() => chests.value.map(chest => chest.amount * (pri
 div.c-grid.p-10
   p.text-center {{ error }}
   div
-    h1.text-2xl.font-bold.text-center.text-rose-500.mb-10 CS:GO Inventory value checker
+    h1.text-2xl.font-bold.text-center.text-red-500.mb-10 CS:GO Inventory value checker
     div.flex.flex-col.justify-between.items-center.gap-4
       input.rounded.p-2.border(v-model="user_input" alt="User ID" placeholder="User ID")
       div.flex.gap-2
@@ -87,7 +87,7 @@ div.c-grid.p-10
         button.btn(@click="update_prices") Update Prices
       div Total chest value: {{ total_value }}€
 div.chest-grid
-  div.flex.flex-col.justify-between.border.border-rose-500.rounded-xl.p-2.shadow-xl(v-for="chest in chests" :key="chest.classid")
+  div.flex.flex-col.justify-between.border.border-red-500.rounded-xl.p-2.shadow-xl(v-for="chest in chests" :key="chest.classid")
     p.text-red.font-bold(v-if="prices[chest.classid] && prices[chest.classid].error") {{ prices[chest.classid].error }}
     h1.text-xl.font-bold {{ chest.name }}
     p.whitespace-nowrap.font-bold(v-if="prices[chest.classid]")

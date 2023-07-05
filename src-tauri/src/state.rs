@@ -1,4 +1,5 @@
 use anyhow::anyhow;
+use directories::ProjectDirs;
 use futures::future::join_all;
 use http_cache_reqwest::{CACacheManager, Cache, CacheMode, HttpCache};
 use itertools::Itertools;
@@ -44,7 +45,12 @@ impl State {
             client: ClientBuilder::new(Client::new())
                 .with(Cache(HttpCache {
                     mode: CacheMode::Default,
-                    manager: CACacheManager::default(),
+                    manager: CACacheManager {
+                        path: ProjectDirs::from("com", "csgo-stocks", "stocks")
+                            .unwrap()
+                            .cache_dir()
+                            .to_path_buf()
+                    },
                     options: None,
                 }))
                 .build(),
@@ -140,7 +146,7 @@ impl State {
                 .get("https://steamcommunity.com/market/priceoverview/")
                 .query(&used_options)
                 .query(&[("market_hash_name".to_string(), market_hash_name)])
-                .header("Cookie", "steamLoginSecure=76561198083067227%7C%7CeyAidHlwIjogIkpXVCIsICJhbGciOiAiRWREU0EiIH0.eyAiaXNzIjogInI6MEQyMV8yMjcxRkM2Rl8yODU2NyIsICJzdWIiOiAiNzY1NjExOTgwODMwNjcyMjciLCAiYXVkIjogWyAid2ViIiBdLCAiZXhwIjogMTY4ODA1MjYxMiwgIm5iZiI6IDE2NzkzMjU1OTQsICJpYXQiOiAxNjg3OTY1NTk0LCAianRpIjogIjBEMUFfMjJDNTA3QjBfQjM3OTgiLCAib2F0IjogMTY4MjUwMTk3NCwgInJ0X2V4cCI6IDE3MDA1NTMxMzQsICJwZXIiOiAwLCAiaXBfc3ViamVjdCI6ICI5NC4yMTcuNDIuMTUzIiwgImlwX2NvbmZpcm1lciI6ICI5NC4yMTcuNDIuMTUzIiB9.AEddxUX1x5Uy77Qc-RYUzgm84cLwOXGlqAJLHM7gLnjpFnUXx2g7o8yU_WNG1oJ8w1dYX4ywF3aQwEyVBxcBCA; sessionid=69d11820b3c750fbac6e2b70")
+                .header("Cookie", "steamLoginSecure=76561198083067227%7C%7CeyAidHlwIjogIkpXVCIsICJhbGciOiAiRWREU0EiIH0.eyAiaXNzIjogInI6MEQyQl8yMjcxRkNFNl80OEQ4NiIsICJzdWIiOiAiNzY1NjExOTgwODMwNjcyMjciLCAiYXVkIjogWyAid2ViIiBdLCAiZXhwIjogMTY4ODY4MDA4OSwgIm5iZiI6IDE2Nzk5NTM2NzcsICJpYXQiOiAxNjg4NTkzNjc3LCAianRpIjogIjBEMUFfMjJDOTE4NjVfRjU2NDQiLCAib2F0IjogMTY4MjY3NTA4NSwgInJ0X2V4cCI6IDE3MDA3ODE5NDksICJwZXIiOiAwLCAiaXBfc3ViamVjdCI6ICIxNTYuNjcuMTM2LjcxIiwgImlwX2NvbmZpcm1lciI6ICIxNTYuNjcuMTM2LjcxIiB9.YMH4eWikCZRTddIxvvHX3SowVhJs4VJYfL5u0hDojhQDtk8rxGazYlJy6UJrTjn73dMfY7gwMPGUeA9jFdZXCg")
                 .build()?;
             let client = self.client.clone();
             let request = tokio::spawn(async move {
@@ -175,7 +181,7 @@ impl State {
                 .get("https://steamcommunity.com/market/pricehistory")
                 .query(&used_options)
                 .query(&[("market_hash_name".to_string(), market_hash_name)])
-                .header("Cookie", "sessionid=24ab9a47f7bab28160ff0ac4; steamCountry=DE%7Cfbc3658791259f811e8fe2460ec9c18f; timezoneOffset=7200,0; steamLoginSecure=76561198083067227%7C%7CeyAidHlwIjogIkpXVCIsICJhbGciOiAiRWREU0EiIH0.eyAiaXNzIjogInI6MEQyQl8yMjcxRkNFNl80OEQ4NiIsICJzdWIiOiAiNzY1NjExOTgwODMwNjcyMjciLCAiYXVkIjogWyAid2ViIiBdLCAiZXhwIjogMTY4ODA3NzE1MCwgIm5iZiI6IDE2NzkzNDkwOTIsICJpYXQiOiAxNjg3OTg5MDkyLCAianRpIjogIjBEMUFfMjJDNTA3QzBfRkE0NDgiLCAib2F0IjogMTY4MjY3NTA4NSwgInJ0X2V4cCI6IDE3MDA3ODE5NDksICJwZXIiOiAwLCAiaXBfc3ViamVjdCI6ICIxNTYuNjcuMTM2LjcxIiwgImlwX2NvbmZpcm1lciI6ICIxNTYuNjcuMTM2LjcxIiB9.-cDGX6ppcT9xDb3q6UU6OHuEUYKjPxF8ohCX-kstSddM2khL71pG70zG9O4g7aypUOGfnOBu9Bt30NA9K7mfBQ")
+                .header("Cookie", "sessionid=34ab75c60a3b9fab97c7ad6b; steamCountry=DE%7Cdc66e9879d6dfd8badf861706ae4120c; steamLoginSecure=76561198083067227%7C%7CeyAidHlwIjogIkpXVCIsICJhbGciOiAiRWREU0EiIH0.eyAiaXNzIjogInI6MEQyQl8yMjcxRkNFNl80OEQ4NiIsICJzdWIiOiAiNzY1NjExOTgwODMwNjcyMjciLCAiYXVkIjogWyAid2ViIiBdLCAiZXhwIjogMTY4ODY4MDA4OSwgIm5iZiI6IDE2Nzk5NTM2NzcsICJpYXQiOiAxNjg4NTkzNjc3LCAianRpIjogIjBEMUFfMjJDOTE4NjVfRjU2NDQiLCAib2F0IjogMTY4MjY3NTA4NSwgInJ0X2V4cCI6IDE3MDA3ODE5NDksICJwZXIiOiAwLCAiaXBfc3ViamVjdCI6ICIxNTYuNjcuMTM2LjcxIiwgImlwX2NvbmZpcm1lciI6ICIxNTYuNjcuMTM2LjcxIiB9.YMH4eWikCZRTddIxvvHX3SowVhJs4VJYfL5u0hDojhQDtk8rxGazYlJy6UJrTjn73dMfY7gwMPGUeA9jFdZXCg")
                 .build()?;
             let client = self.client.clone();
             let request = tokio::spawn(async move {
