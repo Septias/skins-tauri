@@ -146,7 +146,7 @@ impl State {
                 .get("https://steamcommunity.com/market/priceoverview/")
                 .query(&used_options)
                 .query(&[("market_hash_name".to_string(), market_hash_name)])
-                .header("Cookie", "steamLoginSecure=76561198083067227%7C%7CeyAidHlwIjogIkpXVCIsICJhbGciOiAiRWREU0EiIH0.eyAiaXNzIjogInI6MEQyQl8yMjcxRkNFNl80OEQ4NiIsICJzdWIiOiAiNzY1NjExOTgwODMwNjcyMjciLCAiYXVkIjogWyAid2ViIiBdLCAiZXhwIjogMTY4ODY4MDA4OSwgIm5iZiI6IDE2Nzk5NTM2NzcsICJpYXQiOiAxNjg4NTkzNjc3LCAianRpIjogIjBEMUFfMjJDOTE4NjVfRjU2NDQiLCAib2F0IjogMTY4MjY3NTA4NSwgInJ0X2V4cCI6IDE3MDA3ODE5NDksICJwZXIiOiAwLCAiaXBfc3ViamVjdCI6ICIxNTYuNjcuMTM2LjcxIiwgImlwX2NvbmZpcm1lciI6ICIxNTYuNjcuMTM2LjcxIiB9.YMH4eWikCZRTddIxvvHX3SowVhJs4VJYfL5u0hDojhQDtk8rxGazYlJy6UJrTjn73dMfY7gwMPGUeA9jFdZXCg")
+                .header("Cookie", "steamLoginSecure=76561198083067227%7C%7CeyAidHlwIjogIkpXVCIsICJhbGciOiAiRWREU0EiIH0.eyAiaXNzIjogInI6MEQyMV8yMjcxRkM2Rl8yODU2NyIsICJzdWIiOiAiNzY1NjExOTgwODMwNjcyMjciLCAiYXVkIjogWyAid2ViIiBdLCAiZXhwIjogMTY4OTAxMDQ2OSwgIm5iZiI6IDE2ODAyODI0NjcsICJpYXQiOiAxNjg4OTIyNDY3LCAianRpIjogIjBEMUFfMjJEMjk1Q0ZfNTJEOTEiLCAib2F0IjogMTY4MjUwMTk3NCwgInJ0X2V4cCI6IDE3MDA1NTMxMzQsICJwZXIiOiAwLCAiaXBfc3ViamVjdCI6ICI5NC4yMTcuNDIuMTUzIiwgImlwX2NvbmZpcm1lciI6ICI5NC4yMTcuNDIuMTUzIiB9.W4EamXxKIn2dnatGnBeYDkMk54SQqXwFjdAK1NjwxRQcjf_a2SRyy9FuIjnX-bali3ge_IQM3wScJMIxvvyWAQ; sessionid=68bd30a98948c17378e905c5")
                 .build()?;
             let client = self.client.clone();
             let request = tokio::spawn(async move {
@@ -200,7 +200,8 @@ impl State {
     }
 
     pub async fn get_all_csgo_items(&self) -> Result<HashMap<String, MarketItem>, StateError> {
-        let resp = self.client.get("http://csgobackpack.net/api/GetItemsList/v2/").send().await?;
+        let resp = self.client.get("https://csgobackpack.net/api/GetItemsList/v2/?no_details=true&no_prices=true").send().await?;
+        println!("wat");
         Ok(serde_json::from_str::<ItemListResponse>(&resp.text().await?).unwrap().items_list)
     }
 

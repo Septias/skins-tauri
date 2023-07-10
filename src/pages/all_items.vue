@@ -25,12 +25,14 @@ function isOkayItemPrice(thing: any): thing is { Ok: [string, number, string][] 
 }
 
 async function get_all_containers() {
+  console.log('trying to get items and prices')
+
   try {
     const res: Record<string, MarketItemOnCrack> = await invoke('get_all_csgo_basic_cases')
+    console.log(res)
     const prices = await get_price_history(Object.values(res).map(item => [Number(item.classid), item.name]))
-    for (const [id, value] of Object.entries(prices)) {
-      console.log(id, value)
 
+    for (const [id, value] of Object.entries(prices)) {
       if (isOkayItemPrice(value)) {
         res[Number(id)].values = value.Ok
       }
